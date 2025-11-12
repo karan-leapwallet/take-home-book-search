@@ -13,7 +13,6 @@ export const useBooks = (query: string) => {
   const [books, setBooks] = useState<Record<number, Book[]>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const fetchBooks = useCallback(
@@ -29,13 +28,12 @@ export const useBooks = (query: string) => {
         const data = await res.json();
         setHasMore(data?.docs?.length > 0 && data?.num_found - data?.start > 0);
         setBooks((prev) => ({ ...prev, [pageToFetch]: data?.docs ?? [] }));
-        setTotal(data?.num_found ?? 0);
         setPage(pageToFetch + 1);
       } catch (error) {
         setError(
           error instanceof Error ? error.message : "Error fetching books..."
         );
-        // can add a retry mechanism here
+        // TODO: can add a retry mechanism here
         // otherwise will have to think how do we want to handle error when paging latest page
       } finally {
         setIsLoading(false);
@@ -57,5 +55,5 @@ export const useBooks = (query: string) => {
     }
   }, [fetchBooks, hasMore]);
 
-  return { books, isLoading, error, hasMore, total, fetchNextPage };
+  return { books, isLoading, error, hasMore, fetchNextPage };
 };
