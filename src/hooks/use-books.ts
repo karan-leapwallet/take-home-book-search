@@ -12,7 +12,6 @@ export const useBooks = (query: string) => {
   const [page, setPage] = useState(1);
   const [books, setBooks] = useState<Record<number, Book[]>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -23,8 +22,6 @@ export const useBooks = (query: string) => {
         if (page === 1 || toReset) {
           setIsLoading(true);
           setBooks({});
-        } else {
-          setIsFetching(true);
         }
         setError(null);
         const pageToFetch = toReset ? 1 : page;
@@ -42,7 +39,6 @@ export const useBooks = (query: string) => {
         // otherwise will have to think how do we want to handle error when paging latest page
       } finally {
         setIsLoading(false);
-        setIsFetching(false);
       }
     },
     [query, page]
@@ -61,5 +57,5 @@ export const useBooks = (query: string) => {
     }
   }, [fetchBooks, hasMore]);
 
-  return { books, isLoading, isFetching, error, hasMore, total, fetchNextPage };
+  return { books, isLoading, error, hasMore, total, fetchNextPage };
 };

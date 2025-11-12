@@ -5,42 +5,30 @@ import { useDebouncedValue } from "./hooks/use-debounced-value";
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
-  const { books, isLoading, isFetching, error, hasMore, total, fetchNextPage } =
+  const { books, isLoading, error, hasMore, fetchNextPage } =
     useBooks(debouncedSearchQuery);
 
   const allBooks = useMemo(() => {
     const _books = Object.values(books).flat();
-    const loaders = hasMore ? ["loader"] : [];
-    return [..._books, ...loaders];
-  }, [books, hasMore]);
+    const lastElement: ("error" | "loader")[] = [];
+    if (error) {
+      lastElement.push("error");
+    } else if (hasMore) {
+      lastElement.push("loader");
+    }
+    return [..._books, ...lastElement];
+  }, [books, hasMore, error]);
 
   const ref = useRef<HTMLDivElement>(null);
-  console.log({
-    searchQuery,
-    books,
-    debouncedSearchQuery,
-    isLoading,
-    isFetching,
-    error,
-    hasMore,
-    total,
-    ref: ref.current?.scrollHeight,
-  });
 
   // alternative approach can be to use last element and if it is visible start fetching
   // I just used this approach as it came to mind first
   const handleScroll = useCallback(
     (data: React.UIEvent<HTMLDivElement>) => {
-      console.log(
-        "scroll",
-        data.currentTarget.scrollTop + data.currentTarget.clientHeight,
-        data.currentTarget.scrollHeight - 100
-      );
       if (
         data.currentTarget.scrollTop + data.currentTarget.clientHeight >=
         data.currentTarget.scrollHeight - 100
       ) {
-        console.log("fetching next page");
         fetchNextPage();
       }
     },
@@ -74,14 +62,27 @@ function App() {
         ) : (
           allBooks.map((book) => {
             if (typeof book === "string") {
-              return (
-                <div
-                  key={book}
-                  className="flex justify-center items-center p-5 h-10"
-                >
-                  Loading...
-                </div>
-              );
+              if (book === "loader") {
+                return (
+                  <div
+                    key={book}
+                    className="flex justify-center items-center p-5 h-10"
+                  >
+                    Loading...
+                  </div>
+                );
+              }
+
+              if (book === "error") {
+                return (
+                  <div
+                    key={book}
+                    className="flex justify-center items-center p-5 h-10"
+                  >
+                    Error fetching books: {error ?? "Unknown error"}
+                  </div>
+                );
+              }
             }
             return (
               <div key={book.key}>
