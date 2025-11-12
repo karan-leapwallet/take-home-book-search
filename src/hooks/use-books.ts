@@ -24,7 +24,24 @@ export const useBooks = (query: string) => {
         }
         setError(null);
         const pageToFetch = toReset ? 1 : page;
-        const res = await fetch(`${BASE_URL}?q=${query}&page=${pageToFetch}`);
+        let shouldRetry = true;
+        let res: Response | null = null;
+        let retryCount = 0;
+        while (shouldRetry) {
+          try {
+            res = await fetch(`${BASE_URL}?q=${query}&page=${pageToFetch}`);
+            shouldRetry = false;
+          } catch (error) {
+            retryCount++;
+            if (retryCount > 3) {
+              throw error;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        }
+        if (!res) {
+          throw new Error("Error fetching books");
+        }
         const data = await res.json();
         setHasMore(data?.docs?.length > 0 && data?.num_found - data?.start > 0);
         setBooks((prev) => ({ ...prev, [pageToFetch]: data?.docs ?? [] }));
